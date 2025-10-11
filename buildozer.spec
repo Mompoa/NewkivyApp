@@ -1,10 +1,10 @@
 [app]
 
 # (str) Title of your application
-title = rgb_hex_converter
+title = rgb
 
 # (str) Package name
-package.name = converter
+package.name = converter.lol
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = com.yashas.app
