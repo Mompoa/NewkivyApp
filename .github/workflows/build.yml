@@ -28,14 +28,9 @@ jobs:
           path: .buildozer
           key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-      # 🔧 Fix: Create 'user' to avoid chown error
-      - name: Fix user permissions
-        run: |
-          sudo useradd -m user || true
-          sudo chown -R user:user /github/workspace
-
+      # ✅ FIXED VERSION of Buildozer action (no chown issue)
       - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
+        uses: grimen/buildozer-action@v1
         with:
           command: buildozer android debug
           buildozer_version: master
