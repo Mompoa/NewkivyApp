@@ -10,41 +10,60 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Get Date
-        id: get-date
-        run: echo "date=$(date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
-
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v4
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
         with:
-          path: ~/.buildozer
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
-
-      - name: Cache Buildozer project directory
-        uses: actions/cache@v4
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
+          packages: |
+            build-tools;34.0.0
+            platform-tools
+            platforms;android-34
+            platforms;android-33
+            ndk;25.2.9519653
+            cmdline-tools;latest
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip openjdk-11-jdk git unzip
+          sudo apt-get install -y \
+            python3-pip git unzip \
+            autoconf libtool pkg-config \
+            zlib1g-dev libncurses5-dev libtinfo6 \
+            libssl-dev libffi-dev
+
+      - name: Install Buildozer
+        run: |
           pip install buildozer cython
+
+      - name: Fix AIDL Path Issue
+        run: |
+          # Find AIDL and create symlinks
+          AIDL_PATH=$(find /usr/local/lib/android/sdk -name aidl -type f | head -1)
+          echo "Found AIDL at: $AIDL_PATH"
+          
+          # Create symlink in /usr/local/bin
+          sudo ln -sf "$AIDL_PATH" /usr/local/bin/aidl
+          sudo chmod +x /usr/local/bin/aidl
+          
+          # Verify AIDL is accessible
+          which aidl
+          aidl --version || echo "AIDL version check skipped"
 
       - name: Build APK
         run: |
           buildozer android debug
         env:
           USER: root
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          PATH: /usr/local/lib/android/sdk/build-tools/34.0.0:/usr/local/bin:$PATH
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: android-app
           path: bin/*.apk
