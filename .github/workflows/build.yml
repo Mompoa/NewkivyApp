@@ -1,56 +1,40 @@
-name: Build APK
-
+name: CI
 on:
   push:
-    branches: [ main ]
-  pull_request:
     branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      DOCKER_BUILDKIT: 0
-      COMPOSE_DOCKER_CLI_BUILD: 0
-      BUILDKIT_PROGRESS: plain
-
     steps:
-      - name: Set up job
-        run: echo "Starting build job..."
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Get Date
         id: get-date
-        run: echo "date=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
+        run: echo "date=$(date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
       - name: Cache Buildozer global directory
         uses: actions/cache@v4
         with:
-          path: ~/.buildozer
-          key: buildozer-${{ runner.os }}-${{ hashFiles('**/*.spec') }}
-          restore-keys: |
-            buildozer-${{ runner.os }}-
+          path: .buildozer_global
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
 
-      - name: Install Docker and check version
-        run: |
-          echo "Checking Docker..."
-          docker --version
-          docker info
-          echo "Pulling kivy/buildozer image..."
-          docker pull kivy/buildozer
+      - name: Cache .buildozer directory
+        uses: actions/cache@v4
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-      - name: Build APK inside Docker
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/home/user/app \
-            kivy/buildozer \
-            buildozer android debug
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          command: buildozer android debug
+          buildozer_version: master
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-${{ env.date }}.apk
+          name: app-${{ steps.get-date.outputs.date }}
           path: bin/*.apk
