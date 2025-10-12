@@ -1,17 +1,10 @@
 [app]
 
 # (str) Title of your application
-<<<<<<< HEAD
-
-
-# (str) Package name
-package.name = converter.lol
-=======
 title = hello
 
 # (str) Package name
-package.name = king
->>>>>>> c600ce4 (Save local changes before pull)
+package.name = converter.lol
 
 # (str) Package domain (needed for android/ios packaging)
 package.domain = reng.app
@@ -102,7 +95,7 @@ fullscreen = 0
 
 # (list) Permissions
 # (See https://python-for-android.readthedocs.io/en/latest/buildoptions/#build-options-1 for all the supported syntaxes and properties)
-#android.permissions = android.permission.INTERNET, (name=android.permission.WRITE_EXTERNAL_STORAGE;maxSdkVersion=18)
+#android.permissions = android.permission.INTERNET
 
 # (list) features (adds uses-feature -tags to manifest)
 #android.features = android.hardware.usb.host
@@ -456,4 +449,4 @@ warn_on_root = 1
 #
 #    Then, invoke the command line with the "demo" profile:
 #
-#buildozer --profile demo android debug
+#buildozer --profile demo android debug 
