@@ -8,7 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Get Date
         id: get-date
@@ -25,17 +26,21 @@ jobs:
           path: .buildozer
           key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-      # 👇 This step manually runs buildozer inside the docker image (bypasses the action)
-      - name: Build with Buildozer (manual docker run)
+      - name: Install Docker and check version
+        run: |
+          docker --version
+          docker pull kivy/buildozer
+
+      - name: Build APK inside Docker
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}:/home/user/app \
-            -w /home/user/app \
+            -v ${{ github.workspace }}:/home/buildozer/app \
+            -w /home/buildozer/app \
             kivy/buildozer \
-            bash -c "export USER=user && buildozer android debug"
+            bash -c "buildozer android debug"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: package
-          path: bin/*
+          path: bin/*.apk
