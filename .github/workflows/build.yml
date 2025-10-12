@@ -10,29 +10,58 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Everything
+      - name: Build with Docker and Debug
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            python3 python3-pip python3-venv \
-            git unzip openjdk-11-jdk \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libtinfo6 \
-            libssl-dev libffi-dev sqlite3
+          set -x  # Enable debug mode
+          echo "=== Starting Docker Build ==="
+          
+          # Create bin directory if it doesn't exist
+          mkdir -p bin
+          
+          # Run with detailed logging and error handling
+          docker run --rm \
+            -v $PWD:/home/user/hostcwd \
+            -w /home/user/hostcwd \
+            -e P4A_RELEASE_KEYSTORE=${{ secrets.P4A_RELEASE_KEYSTORE }} \
+            -e P4A_RELEASE_KEYSTORE_PASSWD=${{ secrets.P4A_RELEASE_KEYSTORE_PASSWD }} \
+            -e P4A_RELEASE_KEYALIAS_PASSWD=${{ secrets.P4A_RELEASE_KEYALIAS_PASSWD }} \
+            -e P4A_RELEASE_KEYALIAS=${{ secrets.P4A_RELEASE_KEYALIAS }} \
+            kivy/buildozer android debug 2>&1 | tee build.log
+          
+          # Check exit status
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "=== Docker exit code: $EXIT_CODE ==="
+          
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "❌ BUILD FAILED - Showing last 100 lines of log:"
+            tail -100 build.log
+            echo "=== Full error details ==="
+            grep -i "error\|failed\|exception" build.log | head -20
+            exit 1
+          else
+            echo "✅ BUILD SUCCESSFUL"
+          fi
 
-      - name: Install Python Packages
+      - name: Check Build Results
         run: |
-          pip install buildozer
-          pip install cython==0.29.33
+          echo "=== Checking build artifacts ==="
+          ls -la bin/ || echo "No bin directory found"
+          find . -name "*.apk" -type f | head -10 || echo "No APK files found"
+          echo "=== Build directory structure ==="
+          ls -la .buildozer/ 2>/dev/null || echo "No .buildozer directory"
 
-      - name: Build with Buildozer
-        run: |
-          buildozer android debug
-        env:
-          USER: root
-
-      - name: Upload APK
+      - name: Upload Build Logs (if failed)
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: my-app
+          name: build-logs
+          path: build.log
+          retention-days: 7
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app
           path: bin/*.apk
+          retention-days: 30
