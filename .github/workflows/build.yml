@@ -10,34 +10,31 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-
-      - name: Install Dependencies
+      - name: Setup Environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            python3 python3-pip python3-venv \
-            git wget unzip \
-            openjdk-11-jdk \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libtinfo6 \
-            libssl-dev libffi-dev
-
-      - name: Install Buildozer
-        run: |
+          sudo apt-get install -y python3-pip openjdk-11-jdk git unzip
           pip install buildozer cython
+
+      - name: Force Accept Android Licenses
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          
+          # Pre-create license files
+          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6481e" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-arm-dbt-license
 
       - name: Build APK
         run: |
-          buildozer android debug
+          yes | buildozer android debug
         env:
           USER: root
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-app
+          name: app
           path: bin/*.apk
