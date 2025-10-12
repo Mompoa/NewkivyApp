@@ -10,76 +10,33 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Android SDK with Build Tools
-        uses: android-actions/setup-android@v2
+      # used to cache dependencies with a timeout
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
+        shell: bash
+
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v4
         with:
-          packages: |
-            build-tools;34.0.0
-            platform-tools
-            platforms;android-34
-            platforms;android-33
-            ndk;25.2.9519653
-            cmdline-tools;latest
+          path: .buildozer_global
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }} # Replace with your path
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/cache@v4
         with:
-          python-version: '3.8'
+          path: .buildozer
+          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            python3-pip git unzip \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libtinfo6 \
-            libssl-dev libffi-dev
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v2
+        id: buildozer
+        with:
+          command: buildozer android debug
+          buildozer_version: master
 
-      - name: Install Buildozer
-        run: |
-          pip install buildozer cython
-
-      - name: Configure Buildozer to Use Specific Build Tools
-        run: |
-          # Update buildozer.spec to use specific build tools
-          if [ -f buildozer.spec ]; then
-            # Comment out or remove any existing android.sdk_path
-            sed -i 's/^android.sdk_path/# android.sdk_path/' buildozer.spec
-            # Add specific build tools version
-            if ! grep -q "android.build_tools_version" buildozer.spec; then
-              echo "" >> buildozer.spec
-              echo "# (str) Android build tools version to use" >> buildozer.spec
-              echo "android.build_tools_version = 34.0.0" >> buildozer.spec
-            else
-              sed -i 's/^android.build_tools_version = .*/android.build_tools_version = 34.0.0/' buildozer.spec
-            fi
-            # Set API levels
-            sed -i 's/^android.api = .*/android.api = 34/' buildozer.spec
-            sed -i 's/^android.minapi = .*/android.minapi = 21/' buildozer.spec
-          fi
-
-      - name: Build APK with Fixed Environment
-        run: |
-          # Set specific environment for buildozer
-          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
-          export ANDROID_HOME=/usr/local/lib/android/sdk
-          export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/25.2.9519653
-          
-          # Add ALL build tools to PATH
-          export PATH=/usr/local/lib/android/sdk/build-tools/34.0.0:/usr/local/lib/android/sdk/build-tools/35.0.0:/usr/local/lib/android/sdk/build-tools/36.0.0:/usr/local/lib/android/sdk/platform-tools:$PATH
-          
-          echo "=== Final PATH ==="
-          echo $PATH
-          echo "=== AIDL Check ==="
-          which aidl
-          aidl --version || echo "AIDL version check failed but continuing..."
-          
-          buildozer -v android debug
-        env:
-          USER: root
-
-      - name: Upload APK
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: android-app
-          path: bin/*.apk
+          name: package
+          path: ${{ steps.buildozer.outputs.filename }}
