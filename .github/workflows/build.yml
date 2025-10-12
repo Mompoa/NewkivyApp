@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Install Buildozer dependencies (Fixed for Ubuntu 24.04)
+      - name: Install Buildozer dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -41,6 +41,23 @@ jobs:
 
       - name: Install Buildozer
         run: pip install buildozer
+
+      - name: Fix buildozer.spec duplicates
+        run: |
+          # Gumawa ng backup
+          cp buildozer.spec buildozer.spec.backup
+          
+          # Gamit ang Python para ayusin ang duplicates
+          python3 -c "
+          import configparser
+          config = configparser.ConfigParser(strict=False)
+          config.read('buildozer.spec')
+          
+          # I-save ng walang duplicates
+          with open('buildozer.spec', 'w') as f:
+              config.write(f)
+          "
+          echo "buildozer.spec duplicates fixed"
 
       - name: Build with Buildozer
         run: |
