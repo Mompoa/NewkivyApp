@@ -14,73 +14,25 @@ jobs:
         id: get-date
         run: echo "date=$(date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
-      - name: Fix merge conflicts in buildozer.spec
-        run: |
-          echo "Checking for merge conflicts in buildozer.spec..."
-          
-          # I-check kung may merge conflicts
-          if grep -q "<<<<<<<" buildozer.spec; then
-            echo "Merge conflicts detected! Fixing..."
-            
-            # Gumawa ng backup
-            cp buildozer.spec buildozer.spec.backup
-            
-            # Simple fix: kunin lang ang HEAD version
-            awk '/^<<<<<<< HEAD/{flag=1; next} /^=======/{flag=0; next} /^>>>>>>>/{next} flag||!/^<<<<<<<|=======|>>>>>>>/' buildozer.spec > buildozer.spec.fixed
-            
-            # I-check kung successful
-            if grep -q "<<<<<<<" buildozer.spec.fixed; then
-              echo "Warning: Conflicts still exist. Using alternative method..."
-              # Alternative: gamitin ang latest version lang
-              head -n 100 buildozer.spec | grep -v "^<<<<<<<" | grep -v "^=======" | grep -v "^>>>>>>>" > buildozer.spec.fixed
-            fi
-            
-            mv buildozer.spec.fixed buildozer.spec
-            echo "Merge conflicts fixed!"
-          else
-            echo "No merge conflicts found."
-          fi
-          
-          # I-verify ang file
-          echo "=== buildozer.spec content (first 20 lines) ==="
-          head -20 buildozer.spec
-
       - name: Cache Buildozer global directory
         uses: actions/cache@v4
         with:
-          path: ~/.buildozer
+          path: .buildozer_global
           key: buildozer-global-${{ hashFiles('buildozer.spec') }}
 
-      - name: Cache Buildozer project directory
-        uses: actions/cache@v4
+      - uses: actions/cache@v4
         with:
           path: .buildozer
           key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-
-      - name: Install Buildozer dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git unzip openjdk-11-jdk python3-pip autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libtinfo6 libsqlite3-dev \
-            libssl-dev libffi-dev
-
-      - name: Install Buildozer
-        run: pip install buildozer
-
       - name: Build with Buildozer
-        run: |
-          buildozer android debug
-        env:
-          USER: root
+        uses: ArtemSBulgakov/buildozer-action@v1
+        with:
+          command: buildozer android debug
+          buildozer_version: master
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: package
-          path: bin/*.apk
+          path: bin/*
