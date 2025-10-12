@@ -25,13 +25,14 @@ jobs:
           path: .buildozer
           key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-      - name: Build with Buildozer (run as root)
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          command: buildozer android debug
-          buildozer_version: master
-        env:
-          USER: root   # 👈 gumamit ng root para sure na existing user sa container
+      # 👇 This step manually runs buildozer inside the docker image (bypasses the action)
+      - name: Build with Buildozer (manual docker run)
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/home/user/app \
+            -w /home/user/app \
+            kivy/buildozer \
+            bash -c "export USER=user && buildozer android debug"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
