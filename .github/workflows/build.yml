@@ -10,33 +10,44 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Android SDK
+      - name: Setup Android SDK with Build Tools
         uses: android-actions/setup-android@v2
+        with:
+          packages: |
+            build-tools;34.0.0
+            platform-tools
+            platforms;android-34
+            ndk;25.2.9519653
+            cmdline-tools;latest
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             python3-pip git unzip \
             autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libtinfo6
+            zlib1g-dev libncurses5-dev libtinfo6 \
+            libssl-dev libffi-dev
 
       - name: Install Buildozer
         run: |
           pip install buildozer cython
 
-      - name: Configure Buildozer to use System Android SDK
+      - name: Verify Android Tools
         run: |
-          # Update buildozer.spec to use system Android SDK
-          if [ -f buildozer.spec ]; then
-            sed -i 's|^#android.sdk_path = .*|android.sdk_path = /usr/local/lib/android/sdk|' buildozer.spec
-            sed -i 's|^#android.ndk_path = .*|android.ndk_path = /usr/local/lib/android/sdk/ndk/25.2.9519653|' buildozer.spec
-          fi
+          echo "=== Checking Android Tools ==="
+          which aidl && aidl --version || echo "AIDL not found"
+          ls /usr/local/lib/android/sdk/build-tools/*/aidl | head -5
+          echo "Build tools available:"
+          ls /usr/local/lib/android/sdk/build-tools/
+          echo "=== Environment ==="
+          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+          echo "PATH: $PATH"
 
       - name: Build APK
         run: |
@@ -45,7 +56,7 @@ jobs:
           USER: root
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
           ANDROID_HOME: /usr/local/lib/android/sdk
-          ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25.2.9519653
+          PATH: /usr/local/lib/android/sdk/build-tools/34.0.0:$PATH
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
