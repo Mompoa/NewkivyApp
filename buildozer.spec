@@ -2,7 +2,7 @@
 
 # (str) Title of your application
 <<<<<<< HEAD
-title = rgb
+
 
 # (str) Package name
 package.name = converter.lol
