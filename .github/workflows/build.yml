@@ -10,20 +10,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-
-      - name: Install Dependencies
+      - name: Setup Python and Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            git unzip openjdk-11-jdk python3-pip autoconf libtool \
-            zlib1g-dev libncurses5-dev libtinfo6
+            git unzip openjdk-11-jdk python3-pip python3-venv \
+            autoconf libtool pkg-config zlib1g-dev libncurses5-dev \
+            libtinfo6 libssl-dev libffi-dev
 
-      - name: Install Buildozer
-        run: pip install buildozer
+      - name: Install Build Dependencies
+        run: |
+          pip install buildozer cython
 
       - name: Build APK
         run: |
@@ -36,3 +33,4 @@ jobs:
         with:
           name: app
           path: bin/*.apk
+          retention-days: 30
