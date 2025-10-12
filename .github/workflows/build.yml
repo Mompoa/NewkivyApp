@@ -29,10 +29,14 @@ jobs:
       - name: Install Docker and check version
         run: |
           docker --version
+          # ✅ Fix: disable BuildKit (prevents unsupported media type error)
+          export DOCKER_BUILDKIT=0
+          export COMPOSE_DOCKER_CLI_BUILD=0
           docker pull kivy/buildozer
 
       - name: Build APK inside Docker
         run: |
+          export DOCKER_BUILDKIT=0
           docker run --rm \
             -v ${{ github.workspace }}:/home/buildozer/app \
             -w /home/buildozer/app \
