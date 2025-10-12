@@ -25,13 +25,13 @@ jobs:
           path: .buildozer
           key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
 
-      - name: Build with Buildozer
+      - name: Build with Buildozer (run as root)
         uses: ArtemSBulgakov/buildozer-action@v1
         with:
           command: buildozer android debug
           buildozer_version: master
         env:
-          USER: runner  # 👈 Important: fixes the invalid user error
+          USER: root   # 👈 gumamit ng root para sure na existing user sa container
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
