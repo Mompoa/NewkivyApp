@@ -17,6 +17,7 @@ jobs:
             build-tools;34.0.0
             platform-tools
             platforms;android-34
+            platforms;android-33
             ndk;25.2.9519653
             cmdline-tools;latest
 
@@ -38,25 +39,44 @@ jobs:
         run: |
           pip install buildozer cython
 
-      - name: Verify Android Tools
+      - name: Configure Buildozer to Use Specific Build Tools
         run: |
-          echo "=== Checking Android Tools ==="
-          which aidl && aidl --version || echo "AIDL not found"
-          ls /usr/local/lib/android/sdk/build-tools/*/aidl | head -5
-          echo "Build tools available:"
-          ls /usr/local/lib/android/sdk/build-tools/
-          echo "=== Environment ==="
-          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
-          echo "PATH: $PATH"
+          # Update buildozer.spec to use specific build tools
+          if [ -f buildozer.spec ]; then
+            # Comment out or remove any existing android.sdk_path
+            sed -i 's/^android.sdk_path/# android.sdk_path/' buildozer.spec
+            # Add specific build tools version
+            if ! grep -q "android.build_tools_version" buildozer.spec; then
+              echo "" >> buildozer.spec
+              echo "# (str) Android build tools version to use" >> buildozer.spec
+              echo "android.build_tools_version = 34.0.0" >> buildozer.spec
+            else
+              sed -i 's/^android.build_tools_version = .*/android.build_tools_version = 34.0.0/' buildozer.spec
+            fi
+            # Set API levels
+            sed -i 's/^android.api = .*/android.api = 34/' buildozer.spec
+            sed -i 's/^android.minapi = .*/android.minapi = 21/' buildozer.spec
+          fi
 
-      - name: Build APK
+      - name: Build APK with Fixed Environment
         run: |
-          buildozer android debug
+          # Set specific environment for buildozer
+          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export ANDROID_NDK_HOME=/usr/local/lib/android/sdk/ndk/25.2.9519653
+          
+          # Add ALL build tools to PATH
+          export PATH=/usr/local/lib/android/sdk/build-tools/34.0.0:/usr/local/lib/android/sdk/build-tools/35.0.0:/usr/local/lib/android/sdk/build-tools/36.0.0:/usr/local/lib/android/sdk/platform-tools:$PATH
+          
+          echo "=== Final PATH ==="
+          echo $PATH
+          echo "=== AIDL Check ==="
+          which aidl
+          aidl --version || echo "AIDL version check failed but continuing..."
+          
+          buildozer -v android debug
         env:
           USER: root
-          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-          ANDROID_HOME: /usr/local/lib/android/sdk
-          PATH: /usr/local/lib/android/sdk/build-tools/34.0.0:$PATH
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
