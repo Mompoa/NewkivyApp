@@ -1,3 +1,5 @@
+name: Build Kivy APK
+
 on:
   push:
     branches: [ main ]
@@ -8,14 +10,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build APK
-        uses: digreatbrian/buildozer-action@v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.11
-          buildozer-cmd: buildozer -v android debug
+          python-version: "3.11"
 
-      - name: Upload artifacts
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk
+          python -m pip install --upgrade pip
+          pip install buildozer cython virtualenv
+
+      - name: Install Android SDK Build Tools (includes AIDL)
+        run: |
+          sudo mkdir -p /usr/lib/android-sdk
+          export ANDROID_HOME=/usr/lib/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+          mkdir -p $ANDROID_HOME/cmdline-tools/latest
+          cd $ANDROID_HOME/cmdline-tools/latest
+          curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o sdk-tools.zip
+          unzip -q sdk-tools.zip
+          yes | ./bin/sdkmanager --licenses
+          yes | ./bin/sdkmanager --update
+          yes | ./bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Build APK
+        run: |
+          buildozer -v android debug
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: package
-          path: ./bin/*.apk
+          name: app-apk
+          path: bin/*.apk
