@@ -64,6 +64,9 @@ android.debug_artifact = apk
 # (str) The format used to package the app for release mode
 android.release_artifact = aab
 
+# ✅ (bool) Automatically accept Android SDK license agreements
+android.accept_sdk_license = True
+
 
 [buildozer]
 
