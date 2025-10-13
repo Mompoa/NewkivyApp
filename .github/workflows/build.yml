@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
 
@@ -22,21 +23,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer cython virtualenv
 
-      - name: Install Android SDK Build Tools (includes AIDL)
+      - name: Install Android SDK Build Tools (user space)
         run: |
-          sudo mkdir -p /usr/lib/android-sdk
-          export ANDROID_HOME=/usr/lib/android-sdk
+          export ANDROID_HOME=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
-          mkdir -p $ANDROID_HOME/cmdline-tools/latest
-          cd $ANDROID_HOME/cmdline-tools/latest
+
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          cd $ANDROID_HOME/cmdline-tools
+
+          # Download Android command line tools
           curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o sdk-tools.zip
-          unzip -q sdk-tools.zip
-          yes | ./bin/sdkmanager --licenses
-          yes | ./bin/sdkmanager --update
-          yes | ./bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          unzip -q sdk-tools.zip -d latest
+          rm sdk-tools.zip
+
+          # Accept licenses and install build tools
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0"
 
       - name: Build APK
+        env:
+          ANDROID_HOME: ${{ github.workspace }}/../android-sdk
+          PATH: ${{ env.PATH }}:${{ github.workspace }}/../android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/../android-sdk/platform-tools
         run: |
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
           buildozer -v android debug
 
       - name: Upload APK artifact
