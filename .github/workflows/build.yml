@@ -23,7 +23,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer cython virtualenv
 
-      - name: Install Android SDK Build Tools (user space)
+      - name: Install Android SDK Build Tools
         run: |
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
@@ -31,13 +31,17 @@ jobs:
           mkdir -p $ANDROID_HOME/cmdline-tools
           cd $ANDROID_HOME/cmdline-tools
 
-          # Download Android command line tools
+          echo "📦 Downloading Android SDK tools..."
           curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o sdk-tools.zip
-          unzip -q sdk-tools.zip -d latest
+          unzip -q sdk-tools.zip -d tools
           rm sdk-tools.zip
 
-          # Accept licenses and install build tools
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          # Move the tools into the correct structure
+          mkdir -p $ANDROID_HOME/cmdline-tools/latest
+          mv tools/* $ANDROID_HOME/cmdline-tools/latest/
+
+          echo "🧩 Installing Android Build Tools..."
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
             "platform-tools" \
@@ -46,8 +50,8 @@ jobs:
 
       - name: Build APK
         env:
-          ANDROID_HOME: ${{ github.workspace }}/../android-sdk
-          PATH: ${{ env.PATH }}:${{ github.workspace }}/../android-sdk/cmdline-tools/latest/bin:${{ github.workspace }}/../android-sdk/platform-tools
+          ANDROID_HOME: ${{ runner.home }}/android-sdk
+          PATH: ${{ runner.home }}/android-sdk/cmdline-tools/latest/bin:${{ runner.home }}/android-sdk/platform-tools:${{ env.PATH }}
         run: |
           export ANDROID_HOME=$HOME/android-sdk
           export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
