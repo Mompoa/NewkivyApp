@@ -1,4 +1,4 @@
-[app]
+GM[app]
 
 # (str) Title of your application
 title = hello
@@ -66,6 +66,7 @@ android.release_artifact = aab
 
 # ✅ (bool) Automatically accept Android SDK license agreements
 android.accept_sdk_license = True
+android.permissions = READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE
 
 
 [buildozer]
