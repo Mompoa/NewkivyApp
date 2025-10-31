@@ -1,124 +1,185 @@
-import kivy
-kivy.require('1.9.1')
-from kivy.app import App
-from kivy.lang import Builder
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.uix.relativelayout import RelativeLayout
-from kivy.uix.textinput import TextInput
-from kivy.animation import Animation
 
-Builder.load_string('''
-<updlbl>:
-    size:500,1000
-    canvas.before: 
-        Color: 
-            rgba: (1, 1, 1, 1) 
-        Rectangle: 
-            source:'background.png'
-            size: root.width, root.height 
-            pos: self.pos
-    Label:
-        id: updlbl
-        text: '[b]Output[/b]:'
-		font_size:"25sp"
-		pos_hint:{"x":-0.3,"y":-0.03}
-		color: "5d18d6"
-		markup: True
-	Label:
-    	text:"Rgb/Hex converter"
-    	pos_hint:{"y":0.46}
-    	background_color: "3d3d3d"
-    	font_size:"25sp"
-	Label:
-		text:"this is a small app by yashas :-)"
-		font_size:"8sp"
-	    color:(1,1,1,1)
- 	   pos_hint:{"x":0,"y":-0.4}
-	TextInput: 
-        id: input
-        hint_text:'Enter hex/rgb code:'
-        pos_hint: {'x': 0.1, 'y': 0.8} 
-        font_size: "20sp"
-        size_hint: 0.8, 0.09
-        padding: 40
-    Label:
-    	text:"hex format: xxxxxx   and   rgb format: xxx,xxx,xxx"
-    	font_size:"10sp"
-    	pos_hint:{"y":.27}
+
+Kivy app to list and dump .so files from a chosen directory.
+
+Intended for legal analysis of files you own or have permission to inspect.
+
+from kivy.app import App from kivy.lang import Builder from kivy.uix.boxlayout import BoxLayout from kivy.properties import ListProperty, StringProperty from kivy.clock import mainthread import os import shutil import hashlib from datetime import datetime
+
+try to use plyer.filechooser on Android/desktop
+
+try: from plyer import filechooser except Exception: filechooser = None
+
+KV = ''' <Box>: orientation: 'vertical' padding: 12 spacing: 8
+
+BoxLayout:
+    size_hint_y: None
+    height: '40dp'
+    spacing: 8
+    TextInput:
+        id: path_input
+        text: root.current_path
+        hint_text: 'Enter folder path or use Browse'
     Button:
-        text: 'Convert'
-		size_hint:.4,.08
-		pos_hint:{"x":0.28,"y":0.6}
-		border:1,1,1,1
-		on_press:root.convert()
-	TextInput: 
-        id: output
-        hint_text:'Output will be shown here'
-        pos_hint: {'x': 0.1, 'y': 0.3}
-        font_size: "20sp"
-        size_hint: 0.8, 0.09
-        padding: 40
- ''')
+        text: 'Browse'
+        size_hint_x: None
+        width: '90dp'
+        on_release: root.browse()
+    Button:
+        text: 'Scan .so'
+        size_hint_x: None
+        width: '90dp'
+        on_release: root.scan_so_files()
 
-class updlbl(RelativeLayout):
-     def __init__(self, **kwargs):
-       super(updlbl,self).__init__(**kwargs)
-       pass
-     def ch_text(self, txxt):
-     	       self.ids.updlbl.text=txxt
-     	       anim = Animation(x=50, size=(80, 80), t='in_quad')
-     	       anim += Animation(x=-50,size=(40, 40), t='in_quad')
-     	       anim.repeat=True
-     	       anim.start(self.ids.updlbl)
-     def toHEX(self,sett):
-     		try:
-     			val = sett.split(",")
-     			conv = {0:0,1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:"a",11:"b",12:"c",13:"d",14:"e",15:"f",16:"g"}
-     			t1 = str(float(val[0])/16).split(".")
-     			v1 = conv[int(t1[0])]
-     			v2 = conv[int(float("0."+t1[1])*16)]
-     			t2 = str(float(val[1])/16).split(".")
-     			v3 = conv[int(t2[0])]
-     			v4 = conv[int(float("0."+t2[1])*16)]
-     			t3 = str(float(val[2])/16).split(".")
-     			v5 = conv[int(t3[0])]
-     			v6 = conv[int(float("0."+t3[1])*16)]
-     			self.ids.output.text = f" #{v1}{v2}{v3}{v4}{v5}{v6}"
-     		except:
-     			self.ids.output.text = "Something is not correct, \ncheck again example of rgb code: 200,20,60"
-     def toRGB(self,sett):
-     		conv = {0:0,1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,10:"a",11:"b",12:"c",13:"d",14:"e",15:"f",16:"g"}
-     		try:
-     			conv2 = {str(v): k for k, v in conv.items()}
-     			h1 = []
-     			for bb in sett:
-     				h1.append(bb)
-     			n1 = (int(conv2[h1[0]])*16)+(int(conv2[h1[1]]))
-     			n2 = (int(conv2[h1[2]])*16)+(int(conv2[h1[3]]))
-     			n3 = (int(conv2[h1[4]])*16)+(int(conv2[h1[5]]))
-     			hk = f"rgb({n1},{n2},{n3})"
-     			self.ids.output.text = hk
-     		except:
-     			self.ids.output.text = "something is not correct, \nplease enter in small letters and try. error:HEX"
-     			
-     def convert(self):
-     	code = "HEX"
-     	sett = self.ids.input.text
-     	for x in sett:
-     		if x == ',':
-     			code = "RGB"
-     		if code == "RGB":
-     			self.toHEX(sett)
-     		elif code == "HEX":
-     			self.toRGB(sett)
-     		else:
-     			self.ids.output.text = "oh no! something went wrong"
-	  
-class UpdateLabel(App):
-     def build(self):
-     	self.title = "Update Label"
-     	return updlbl()
+Label:
+    size_hint_y: None
+    height: '24dp'
+    text: root.status_text
 
-if __name__ == '__main__':
-    UpdateLabel().run()
+ScrollView:
+    GridLayout:
+        id: list_grid
+        cols:1
+        size_hint_y: None
+        height: self.minimum_height
+        row_default_height: '48dp'
+        row_force_default: True
+
+BoxLayout:
+    size_hint_y: None
+    height: '40dp'
+    spacing: 8
+    Button:
+        text: 'Dump Selected'
+        on_release: root.dump_selected()
+    Button:
+        text: 'Copy All'
+        on_release: root.copy_all()
+
+Label:
+    size_hint_y: None
+    height: '120dp'
+    text: root.selected_info
+    text_size: self.width, None
+    valign: 'top'
+    halign: 'left'
+
+'''
+
+from kivy.uix.gridlayout import GridLayout from kivy.uix.label import Label from kivy.uix.checkbox import CheckBox from kivy.uix.textinput import TextInput from kivy.uix.button import Button
+
+class FileRow(BoxLayout): path = StringProperty('') name = StringProperty('') checked = False def init(self, path, name, **kwargs): super().init(**kwargs) self.path = path self.name = name self.orientation = 'horizontal' self.size_hint_y = None self.height = '48dp' self.checkbox = CheckBox(size_hint_x=None, width='48dp') self.add_widget(self.checkbox) self.add_widget(Label(text=name, halign='left', valign='middle')) btn = Button(text='Info', size_hint_x=None, width='90dp') btn.bind(on_release=self.show_info) self.add_widget(btn)
+
+def show_info(self, *a):
+    app = App.get_running_app()
+    app.root.show_file_info(self.path)
+
+class Box(BoxLayout): so_files = ListProperty([]) current_path = StringProperty(os.path.expanduser('~')) status_text = StringProperty('Ready') selected_info = StringProperty('Select a file and press Info to see metadata')
+
+def browse(self):
+    if filechooser:
+        filechooser.choose_dir(on_selection=self._on_dir)
+    else:
+        self.status_text = 'filechooser not available on this platform. Enter path manually.'
+
+def _on_dir(self, selection):
+    if selection:
+        self.current_path = selection[0]
+        self.status_text = f'Selected: {self.current_path}'
+
+def scan_so_files(self):
+    path = self.ids.path_input.text.strip()
+    if not path:
+        path = self.current_path
+    if not os.path.isdir(path):
+        self.status_text = 'Folder path invalid.'
+        return
+    self.status_text = 'Scanning...'
+    self.ids.list_grid.clear_widgets()
+    found = []
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            if f.endswith('.so'):
+                full = os.path.join(root, f)
+                found.append(full)
+                row = FileRow(full, os.path.relpath(full, path))
+                self.ids.list_grid.add_widget(row)
+    self.so_files = found
+    self.status_text = f'Found {len(found)} .so files.'
+
+def get_checked_paths(self):
+    paths = []
+    for child in self.ids.list_grid.children:
+        if isinstance(child, FileRow) and child.checkbox.active:
+            paths.append(child.path)
+    return paths
+
+def dump_selected(self):
+    sel = self.get_checked_paths()
+    if not sel:
+        self.status_text = 'No files selected.'
+        return
+    out = os.path.join(os.path.expanduser('~'), 'so_dumps')
+    os.makedirs(out, exist_ok=True)
+    for p in sel:
+        try:
+            shutil.copy2(p, out)
+        except Exception as e:
+            print('copy error', e)
+    self.status_text = f'Dumped {len(sel)} files to {out}'
+
+def copy_all(self):
+    if not self.so_files:
+        self.status_text = 'No files to copy. Scan first.'
+        return
+    out = os.path.join(os.path.expanduser('~'), 'so_dumps')
+    os.makedirs(out, exist_ok=True)
+    count = 0
+    for p in self.so_files:
+        try:
+            shutil.copy2(p, out)
+            count += 1
+        except Exception as e:
+            print('copy error', e)
+    self.status_text = f'Copied {count} files to {out}'
+
+def show_file_info(self, filepath):
+    try:
+        stat = os.stat(filepath)
+        size = stat.st_size
+        mtime = datetime.fromtimestamp(stat.st_mtime).isoformat()
+        sha256 = self.compute_sha256(filepath)
+        elf_info = self.parse_elf_header(filepath)
+        info = f"Path: {filepath}\nSize: {size} bytes\nModified: {mtime}\nSHA256: {sha256}\nELF: {elf_info}"
+        self.selected_info = info
+    except Exception as e:
+        self.selected_info = f'Error reading file: {e}'
+
+def compute_sha256(self, filepath):
+    h = hashlib.sha256()
+    with open(filepath, 'rb') as f:
+        for chunk in iter(lambda: f.read(8192), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+def parse_elf_header(self, filepath):
+    try:
+        with open(filepath, 'rb') as f:
+            magic = f.read(16)
+        if len(magic) < 16:
+            return 'Not ELF or too small'
+        if magic[0:4] != b"\x7fELF":
+            return 'Not an ELF file'
+        cls = magic[4]
+        data = magic[5]
+        ei_version = magic[6]
+        abi = magic[7]
+        cls_str = '32-bit' if cls == 1 else '64-bit' if cls == 2 else f'unknown({cls})'
+        data_str = 'little-endian' if data == 1 else 'big-endian' if data == 2 else f'unknown({data})'
+        return f'{cls_str}, {data_str}, version={ei_version}, abi={abi}'
+    except Exception as e:
+        return f'Error parsing ELF: {e}'
+
+class SoDumperApp(App): def build(self): Builder.load_string(KV) root = Box() return root
+
+if name == 'main': SoDumperApp().run()
