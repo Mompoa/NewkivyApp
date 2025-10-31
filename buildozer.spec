@@ -1,4 +1,4 @@
-GM[app]
+[app]
 
 # (str) Title of your application
 title = hello
@@ -12,13 +12,13 @@ package.domain = reng.app
 # (str) Source code where the main.py live
 source.dir = .
 
-# (list) Source files to include (let empty to include all the files)
+# (list) Source files to include (leave empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas,gif
 
 # (list) Application requirements
-requirements = python3,kivy
+requirements = python3,kivy,plyer
 
-# (str) Presplash of the application
+# (str) Presplash of the application (optional)
 presplash.filename = %(source.dir)s/loading.gif
 
 # (str) Icon of the application
@@ -37,19 +37,19 @@ fullscreen = 0
 #  UPDATED ANDROID SETTINGS
 # ------------------------------
 
-# (int) Target Android API, should be as high as possible.
-android.api = 34
+# (int) Target Android API
+android.api = 33
 
-# (int) Minimum API your APK / AAB will support.
+# (int) Minimum API your APK / AAB will support
 android.minapi = 21
 
-# (int) Android SDK version to use.
-android.sdk = 34
+# (int) Android SDK version to use
+android.sdk = 33
 
 # (str) Android NDK version to use
-android.ndk = 25c
+android.ndk = 25b
 
-# (int) Android NDK API to use.
+# (int) Android NDK API to use
 android.ndk_api = 21
 
 # (list) The Android architectures to build for
@@ -64,14 +64,22 @@ android.debug_artifact = apk
 # (str) The format used to package the app for release mode
 android.release_artifact = aab
 
-# ✅ (bool) Automatically accept Android SDK license agreements
+# (bool) Automatically accept Android SDK license agreements
 android.accept_sdk_license = True
+
+# (list) Android permissions
 android.permissions = READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE
+
+# (bool) Use AndroidX support libraries
+android.enable_androidx = True
+
+# (bool) Allow internet access (default: True)
+android.internet = True
 
 
 [buildozer]
 
-# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+# (int) Log level (0 = error only, 1 = info, 2 = debug)
 log_level = 2
 
 # (int) Display warning if buildozer is run as root (0 = False, 1 = True)
