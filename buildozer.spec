@@ -21,7 +21,7 @@ requirements = python3,pygame==2.1.3,plyer
 
 # (str) Presplash of the application (optional)
 # GIF presplashes sometimes cause issues; use PNG if you run into problems.
-presplash.filename = %(source.dir)s/loading.png
+presplash.filename = %(source.dir)s/loading.gif
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/logo.png
