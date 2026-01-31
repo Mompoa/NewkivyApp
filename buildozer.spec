@@ -16,7 +16,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,gif
 
 # (list) Application requirements
-requirements = python3,kivy,plyer,pygame 
+requirements = python3,pygame,plyer
 
 # (str) Presplash of the application (optional)
 presplash.filename = %(source.dir)s/loading.gif
@@ -68,7 +68,7 @@ android.release_artifact = aab
 android.accept_sdk_license = True
 
 # (list) Android permissions
-android.permissions = READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE
+#android.permissions = READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE
 
 # (bool) Use AndroidX support libraries
 android.enable_androidx = True
