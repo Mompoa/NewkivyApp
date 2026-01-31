@@ -30,6 +30,16 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("arial", 40, bold=True)
 small_font = pygame.font.SysFont("arial", 24)
 
+# ==================== HELPERS ====================
+
+def circle_rect_collide(cx, cy, radius, rect):
+    # Find closest point on rect to circle center
+    closest_x = max(rect.left, min(cx, rect.right))
+    closest_y = max(rect.top, min(cy, rect.bottom))
+    dx = cx - closest_x
+    dy = cy - closest_y
+    return (dx*dx + dy*dy) <= (radius * radius)
+
 # ==================== CLASSES ====================
 
 class Bird:
@@ -82,10 +92,15 @@ class Pipe:
     def off_screen(self):
         return self.x + PIPE_WIDTH < 0
 
-    def collides_with(self, bird_rect):
+    def collides_with(self, bird):
+        # Use precise circle-vs-rect collision for bird
         top_rect = pygame.Rect(self.x, 0, PIPE_WIDTH, self.height)
-        bottom_rect = pygame.Rect(self.x, self.height + PIPE_GAP, PIPE_WIDTH, HEIGHT)
-        return bird_rect.colliderect(top_rect) or bird_rect.colliderect(bottom_rect)
+        bottom_rect = pygame.Rect(self.x, self.height + PIPE_GAP, PIPE_WIDTH, HEIGHT - (self.height + PIPE_GAP))
+        if circle_rect_collide(bird.x, bird.y, bird.radius, top_rect):
+            return True
+        if circle_rect_collide(bird.x, bird.y, bird.radius, bottom_rect):
+            return True
+        return False
 
 
 # ==================== GAME FUNCTIONS ====================
@@ -140,7 +155,7 @@ def main():
         game_active = True
 
         while game_active:
-            dt = clock.tick(FPS)
+            clock.tick(FPS)
 
             # Events
             for event in pygame.event.get():
@@ -150,43 +165,37 @@ def main():
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
-                        if game_active:
-                            bird.flap()
-                        else:
-                            game_active = True  # fallback
-
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if game_active:
                         bird.flap()
 
-            if game_active:
-                # Update
-                bird.update()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    bird.flap()
 
-                # Spawn pipes
-                now = pygame.time.get_ticks()
-                if now - last_pipe_time > PIPE_INTERVAL:
-                    pipes.append(Pipe(WIDTH + 50))
-                    last_pipe_time = now
+            # Update
+            bird.update()
 
-                # Update pipes & scoring
-                for pipe in pipes[:]:
-                    pipe.update()
-                    if pipe.off_screen():
-                        pipes.remove(pipe)
-                    if not pipe.passed and pipe.x + PIPE_WIDTH < bird.x:
-                        pipe.passed = True
-                        score += 1
+            # Spawn pipes
+            now = pygame.time.get_ticks()
+            if now - last_pipe_time > PIPE_INTERVAL:
+                pipes.append(Pipe(WIDTH + 50))
+                last_pipe_time = now
 
-                # Collision check
-                bird_rect = bird.get_rect()
-                if bird.y - bird.radius < 0 or bird.y + bird.radius > HEIGHT - 60:
+            # Update pipes & scoring
+            for pipe in pipes[:]:
+                pipe.update()
+                if pipe.off_screen():
+                    pipes.remove(pipe)
+                if not pipe.passed and pipe.x + PIPE_WIDTH < bird.x:
+                    pipe.passed = True
+                    score += 1
+
+            # Collision check (top of screen or ground)
+            if bird.y - bird.radius < 0 or bird.y + bird.radius > HEIGHT - 60:
+                game_active = False
+
+            for pipe in pipes:
+                if pipe.collides_with(bird):
                     game_active = False
-
-                for pipe in pipes:
-                    if pipe.collides_with(bird_rect):
-                        game_active = False
-                        break
+                    break
 
             # Drawing
             draw_background()
@@ -195,10 +204,9 @@ def main():
             for pipe in pipes:
                 pipe.draw()
 
-            # Score display
-            show_text(str(score), font, WHITE, WIDTH//2, 80)
-            # semi-transparent black outline effect
-            show_text(str(score), font, BLACK, WIDTH//2 + 2, 82)
+            # Score display: draw black offset first (outline), then white on top
+            show_text(str(score), font, BLACK, WIDTH//2 + 2, 82, center=True)
+            show_text(str(score), font, WHITE, WIDTH//2, 80, center=True)
 
             pygame.display.flip()
 
