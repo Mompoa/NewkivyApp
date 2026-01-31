@@ -16,7 +16,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,gif
 
 # (list) Application requirements
-requirements = python3,kivy,plyer
+requirements = python3,kivy,plyer,pygame 
 
 # (str) Presplash of the application (optional)
 presplash.filename = %(source.dir)s/loading.gif
