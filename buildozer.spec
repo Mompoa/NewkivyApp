@@ -16,10 +16,12 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,gif
 
 # (list) Application requirements
-requirements = python3,pygame,plyer
+# Pin pygame to a known working version to reduce unexpected build failures.
+requirements = python3,pygame==2.1.3,plyer
 
 # (str) Presplash of the application (optional)
-presplash.filename = %(source.dir)s/loading.gif
+# GIF presplashes sometimes cause issues; use PNG if you run into problems.
+presplash.filename = %(source.dir)s/loading.png
 
 # (str) Icon of the application
 icon.filename = %(source.dir)s/logo.png
@@ -31,7 +33,8 @@ version = 0.1
 orientation = portrait
 
 # (bool) Indicate if the application should be fullscreen or not
-fullscreen = 0
+# pygame apps commonly want fullscreen
+fullscreen = 1
 
 # ------------------------------
 #  UPDATED ANDROID SETTINGS
@@ -47,6 +50,8 @@ android.minapi = 21
 android.sdk = 33
 
 # (str) Android NDK version to use
+# If you hit NDK-related build errors, try removing this line so p4a selects a compatible NDK,
+# or change to the version recommended by your python-for-android version.
 android.ndk = 25b
 
 # (int) Android NDK API to use
@@ -68,7 +73,11 @@ android.release_artifact = aab
 android.accept_sdk_license = True
 
 # (list) Android permissions
-#android.permissions = READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE
+# Add only the permissions your app really needs.
+android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+
+# Use SDL2 bootstrap which is the usual bootstrap for pygame/SDL apps
+android.bootstrap = sdl2
 
 # (bool) Use AndroidX support libraries
 android.enable_androidx = True
