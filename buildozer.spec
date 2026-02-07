@@ -17,7 +17,7 @@ source.include_exts = py,png,jpg,kv,atlas,gif
 
 # (list) Application requirements
 # Pin pygame to a known working version to reduce unexpected build failures.
-requirements = python3,pygame,sdl2,sdl2_image,sdl2_mixer,sdl2_ttf
+requirements = python3,pygame,sdl2_image,sdl2_mixer,sdl2_ttf
 
 
 # (str) Presplash of the application (optional)
